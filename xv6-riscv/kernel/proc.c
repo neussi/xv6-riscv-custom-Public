@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "proc_stat.h"
 
 struct cpu cpus[NCPU];
 
@@ -25,6 +26,14 @@ extern char trampoline[]; // trampoline.S
 // memory model when using p->parent.
 // must be acquired before any p->lock.
 struct spinlock wait_lock;
+
+// Définition de ptable
+struct {
+  struct spinlock lock;
+  struct proc proc[NPROC];
+} ptable;
+
+
 
 // Allocate a page for each process's kernel stack.
 // Map it high in memory, followed by an invalid
@@ -229,6 +238,7 @@ uchar initcode[] = {
 };
 
 // Set up first user process.
+
 void
 userinit(void)
 {
@@ -692,4 +702,30 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+
+
+int
+getprocstat(struct proc_stat *pstat, int count)
+{
+  struct proc *p;
+  int i = 0;
+
+  acquire(&ptable.lock);  // Acquérir le verrou de la table des processus
+
+  // Parcourir la table des processus
+  for (p = ptable.proc; p < &ptable.proc[NPROC] && i < count; p++) {
+    if (p->state != UNUSED) {  // Vérifier si le processus est utilisé
+      pstat[i].pid = p->pid;
+      pstat[i].state = p->state;
+      pstat[i].cputicks = p->cputicks;
+      safestrcpy(pstat[i].name, p->name, sizeof(pstat[i].name));
+      i++;
+    }
+  }
+
+  release(&ptable.lock);  // Relâcher le verrou de la table des processus
+
+  return i;  // Retourner le nombre de processus trouvés
 }

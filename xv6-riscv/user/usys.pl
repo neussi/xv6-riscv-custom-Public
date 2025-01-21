@@ -37,3 +37,5 @@ entry("sbrk");
 entry("sleep");
 entry("uptime");
 entry("lseek");
+entry("getprocstat");
+entry("exit_qemu");

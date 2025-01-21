@@ -5,6 +5,8 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "proc_stat.h"
+#include "port.h"  
 
 uint64
 sys_exit(void)
@@ -90,4 +92,34 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+
+uint64
+sys_getprocstat(void)
+{
+  struct proc_stat *pstat;
+  int count;
+
+  // Récupérer les arguments passés par l'utilisateur
+  argaddr(0, (uint64*)&pstat);  // Récupère l'adresse de pstat
+  argint(1, &count);            // Récupère la valeur de count
+
+  // Vérifier si les arguments sont valides
+  if (pstat == 0 || count < 0) {
+    return -1;  // Retourner une erreur si les arguments sont invalides
+  }
+
+  // Remplir le tableau pstat avec les informations des processus
+  return getprocstat(pstat, count);
+}
+
+
+uint64
+sys_exit_qemu(void)
+{
+  // Adresse mémoire spéciale pour fermer QEMU
+  volatile uint32 *exit_address = (volatile uint32 *)0x100000;
+  *exit_address = 0x5555;  // Valeur magique pour fermer QEMU
+  return 0;
 }

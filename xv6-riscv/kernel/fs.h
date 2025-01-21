@@ -1,9 +1,9 @@
 // On-disk file system format.
 // Both the kernel and user programs use this header file.
 
-#define ROOTINO  1   // root i-number
-#define BSIZE 1024  // block size
 
+#define ROOTINO  1   // root i-number
+#define BSIZE 1024  // Nouvelle taille de bloc
 // Disk layout:
 // [ boot block | super block | log | inode blocks |
 //                                          free bit map | data blocks]
@@ -23,7 +23,7 @@ struct superblock {
 
 #define FSMAGIC 0x10203040
 
-#define NDIRECT 12
+#define NDIRECT 10
 #define NINDIRECT (BSIZE / sizeof(uint))
 #define MAXFILE (NDIRECT + NINDIRECT)
 
@@ -34,14 +34,16 @@ struct superblock {
 #define MODE_DEFAULT (MODE_READ | MODE_WRITE)  // Permissions par défaut
 
 // On-disk inode structure
+
 struct dinode {
-  short type;           // File type
-  short major;          // Major device number (T_DEVICE only)
-  short minor;          // Minor device number (T_DEVICE only)
-  short nlink;          // Number of links to inode in file system
-  uint size;            // Size of file (bytes)
-  uint addrs[NDIRECT+1];   // Data block addresses
-  ushort mode;          // Permissions (read, write, execute)
+  short type;           // File type (2 octets)
+  short major;          // Major device number (2 octets)
+  short minor;          // Minor device number (2 octets)
+  short nlink;          // Number of links to inode (2 octets)
+  uint size;            // Size of file (4 octets)
+  uint addrs[NDIRECT+1];   // Data block addresses (13 * 4 = 52 octets)
+  ushort mode;          // Permissions (2 octets)
+  char padding[6];      // Padding pour aligner la taille sur 64 octets (6 octets)
 };
 
 // Inodes per block.
@@ -58,8 +60,8 @@ struct dinode {
 
 // Directory is a file containing a sequence of dirent structures.
 #define DIRSIZ 14
-
 struct dirent {
   ushort inum;
   char name[DIRSIZ];
 };
+

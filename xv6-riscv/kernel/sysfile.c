@@ -242,7 +242,6 @@ bad:
   return -1;
 }
 
-
 static struct inode*
 create(char *path, short type, short major, short minor)
 {
@@ -272,7 +271,6 @@ create(char *path, short type, short major, short minor)
   ip->major = major;
   ip->minor = minor;
   ip->nlink = 1;
-  ip->mode = MODE_DEFAULT;  // Définir les permissions par défaut
   iupdate(ip);
 
   if(type == T_DIR){  // Create . and .. entries.
@@ -302,7 +300,6 @@ create(char *path, short type, short major, short minor)
   iunlockput(dp);
   return 0;
 }
-
 
 uint64
 sys_open(void)
@@ -372,8 +369,6 @@ sys_open(void)
 
   return fd;
 }
-
-
 
 uint64
 sys_mkdir(void)
@@ -509,8 +504,6 @@ sys_pipe(void)
   return 0;
 }
 
-
-
 uint64 sys_lseek(void) {
     int fd;
     int offset;
@@ -518,11 +511,11 @@ uint64 sys_lseek(void) {
     struct file *f;
 
     // Récupérer les arguments
-    argint(0, &fd);        // Récupère fd
-    argint(1, &offset);    // Récupère offset
-    argint(2, &whence);    // Récupère whence
+    argint(0, &fd);
+    argint(1, &offset);
+    argint(2, &whence);
 
-    // Vérifier que le descripteur de fichier est valide
+    // Récupérer le descripteur de fichier
     if (argfd(0, &fd, &f) < 0)
         return -1;
 

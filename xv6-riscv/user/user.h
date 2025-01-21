@@ -1,3 +1,10 @@
+#ifndef USER_H
+#define USER_H
+
+#include "kernel/types.h"
+#include "kernel/proc_stat.h"
+
+
 struct stat;
 
 // system calls
@@ -43,3 +50,12 @@ void* malloc(unsigned int);
 // umalloc.c
 void free(void*);
 int lseek(int fd, int offset, int whence);
+
+int getprocstat(struct proc_stat *pstat, int count);
+
+
+// Dans user/user.h
+int exit_qemu(void);
+
+
+#endif // USER_H
