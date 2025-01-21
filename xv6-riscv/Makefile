@@ -143,6 +143,9 @@ UPROGS=\
 	$U/_ps\
 	$U/_clear\
 	$U/_exit\
+	$U/_sort\
+	$U/_tail\
+	$U/_head\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

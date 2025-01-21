@@ -75,32 +75,29 @@ struct trapframe {
 // Définition de enum procstate
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
-// Définition de struct proc
+// Structure pour les statistiques de processus
 struct proc {
-  struct spinlock lock;
-
-  // p->lock must be held when using these:
-  enum procstate state;        // Process state
-  void *chan;                  // If non-zero, sleeping on chan
-  int killed;                  // If non-zero, have been killed
-  int xstate;                  // Exit status to be returned to parent's wait
-  int pid;                     // Process ID
-
-  // wait_lock must be held when using this:
-  struct proc *parent;         // Parent process
-
-  // these are private to the process, so p->lock need not be held.
-  uint64 kstack;               // Virtual address of kernel stack
-  uint64 sz;                   // Size of process memory (bytes)
-  pagetable_t pagetable;       // User page table
-  struct trapframe *trapframe; // data page for trampoline.S
-  struct context context;      // swtch() here to run process
-  struct file *ofile[NOFILE];  // Open files
-  struct inode *cwd;           // Current directory
-  char name[16];               // Process name (debugging)
-  uint64 cputicks;             // Temps CPU utilisé par le processus
+   struct spinlock lock;
+   enum procstate state;        
+   void *chan;                  
+   int killed;                  
+   int xstate;                  
+   int pid;                     
+   struct proc *parent;         
+   uint64 kstack;               
+   uint64 sz;                   
+   pagetable_t pagetable;       
+   struct trapframe *trapframe; 
+   struct context context;      
+   struct file *ofile[NOFILE];  
+   struct inode *cwd;           
+   char name[16];               
+   
+   // Nouveaux champs pour les statistiques
+   uint64 creation_time;        // Temps de création du processus
+   uint64 cpu_usage;           // Temps CPU utilisé
+   uint64 total_runtime;       // Temps total depuis la création
 };
 
-// Définition de struct proc_stat
-
-#endif // PROC_H
+// Déclarations des fonctions pour ps
+#endif

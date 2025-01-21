@@ -37,5 +37,6 @@ entry("sbrk");
 entry("sleep");
 entry("uptime");
 entry("lseek");
-entry("getprocstat");
+# Ajoutez cette ligne
+entry("getprocs");
 entry("exit_qemu");

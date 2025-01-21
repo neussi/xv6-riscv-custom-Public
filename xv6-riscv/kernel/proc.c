@@ -5,7 +5,8 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
-#include "proc_stat.h"
+#include "procstat.h"
+
 
 struct cpu cpus[NCPU];
 
@@ -154,6 +155,9 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
+  p->creation_time = ticks;
+  p->cpu_usage = 0;
+  p->total_runtime = 0;
 
   return p;
 }
@@ -451,6 +455,7 @@ wait(uint64 addr)
 //  - swtch to start running that process.
 //  - eventually that process transfers control
 //    via swtch back to the scheduler.
+
 void
 scheduler(void)
 {
@@ -472,6 +477,11 @@ scheduler(void)
         // to release its lock and then reacquire it
         // before jumping back to us.
         p->state = RUNNING;
+        
+        // Mise à jour des statistiques avant l'exécution
+        p->cpu_usage++;  // Incrémente le temps CPU
+        p->total_runtime = ticks - p->creation_time;  // Met à jour le temps total
+        
         c->proc = p;
         swtch(&c->context, &p->context);
 
@@ -479,6 +489,13 @@ scheduler(void)
         // It should have changed its p->state before coming back.
         c->proc = 0;
         found = 1;
+      }
+      else {
+        // Même si le processus n'est pas en cours d'exécution, 
+        // on met à jour son temps total
+        if(p->state != UNUSED) {
+          p->total_runtime = ticks - p->creation_time;
+        }
       }
       release(&p->lock);
     }
@@ -489,6 +506,7 @@ scheduler(void)
     }
   }
 }
+
 
 // Switch to scheduler.  Must hold only p->lock
 // and have changed proc->state. Saves and restores
@@ -706,26 +724,43 @@ procdump(void)
 
 
 
+void
+initprocstat(struct proc *p)
+{
+  p->creation_time = ticks;
+  p->cpu_usage = 0;
+  p->total_runtime = 0;
+}
+
+// Met à jour les statistiques du processus
+void
+updateprocstat(struct proc *p)
+{
+  if(p->state == RUNNING) {
+    p->cpu_usage++;
+  }
+  p->total_runtime = ticks - p->creation_time;
+}
+
+// Fonction pour obtenir les statistiques des processus
 int
-getprocstat(struct proc_stat *pstat, int count)
+getprocs(struct proc_stat *stats, int max)
 {
   struct proc *p;
-  int i = 0;
-
-  acquire(&ptable.lock);  // Acquérir le verrou de la table des processus
-
-  // Parcourir la table des processus
-  for (p = ptable.proc; p < &ptable.proc[NPROC] && i < count; p++) {
-    if (p->state != UNUSED) {  // Vérifier si le processus est utilisé
-      pstat[i].pid = p->pid;
-      pstat[i].state = p->state;
-      pstat[i].cputicks = p->cputicks;
-      safestrcpy(pstat[i].name, p->name, sizeof(pstat[i].name));
-      i++;
+  int count = 0;
+  
+  for(p = proc; p < &proc[NPROC] && count < max; p++) {
+    acquire(&p->lock);
+    if(p->state != UNUSED) {
+      stats[count].pid = p->pid;
+      stats[count].state = p->state;
+      safestrcpy(stats[count].name, p->name, sizeof(stats[count].name));
+      stats[count].cpu_usage = p->cpu_usage;
+      stats[count].runtime = p->total_runtime;
+      stats[count].memory = p->sz;
+      count++;
     }
+    release(&p->lock);
   }
-
-  release(&ptable.lock);  // Relâcher le verrou de la table des processus
-
-  return i;  // Retourner le nombre de processus trouvés
+  return count;
 }

@@ -798,10 +798,10 @@ lseek:
  ret
  3f0:	8082                	ret
 
-00000000000003f2 <getprocstat>:
-.global getprocstat
-getprocstat:
- li a7, SYS_getprocstat
+00000000000003f2 <getprocs>:
+.global getprocs
+getprocs:
+ li a7, SYS_getprocs
  3f2:	48dd                	li	a7,23
  ecall
  3f4:	00000073          	ecall

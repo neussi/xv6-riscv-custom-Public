@@ -6,6 +6,8 @@
 #include "proc.h"
 #include "syscall.h"
 #include "defs.h"
+#include "procstat.h"
+
 
 
 // Fetch the uint64 at addr from the current process.
@@ -105,7 +107,7 @@ extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
 extern uint64 sys_lseek(void);
 
-extern uint64 sys_getprocstat(void);
+extern uint64 sys_getprocs(void);
 
 extern uint64 sys_exit_qemu(void);
 
@@ -135,8 +137,9 @@ static uint64 (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_lseek]   sys_lseek,
-[SYS_getprocstat] sys_getprocstat,
 [SYS_exit_qemu] sys_exit_qemu,
+[SYS_getprocs]   sys_getprocs,
+
 
 };
 

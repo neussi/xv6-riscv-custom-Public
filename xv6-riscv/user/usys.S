@@ -110,9 +110,9 @@ lseek:
  li a7, SYS_lseek
  ecall
  ret
-.global getprocstat
-getprocstat:
- li a7, SYS_getprocstat
+.global getprocs
+getprocs:
+ li a7, SYS_getprocs
  ecall
  ret
 .global exit_qemu

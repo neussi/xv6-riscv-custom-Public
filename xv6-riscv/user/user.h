@@ -2,8 +2,9 @@
 #define USER_H
 
 #include "kernel/types.h"
-#include "kernel/proc_stat.h"
+#include "kernel/procstat.h"
 
+// ... reste du code ...
 
 struct stat;
 
@@ -51,8 +52,8 @@ void* malloc(unsigned int);
 void free(void*);
 int lseek(int fd, int offset, int whence);
 
-int getprocstat(struct proc_stat *pstat, int count);
-
+// Ajoutez cette ligne avec les autres déclarations de fonctions système
+int getprocs(struct proc_stat*, int);
 
 // Dans user/user.h
 int exit_qemu(void);

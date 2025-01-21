@@ -21,5 +21,5 @@
 #define SYS_mkdir  20
 #define SYS_close  21
 #define SYS_lseek  22 
-#define SYS_getprocstat 23 
+#define SYS_getprocs 23
 #define SYS_exit_qemu 24
