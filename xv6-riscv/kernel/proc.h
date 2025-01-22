@@ -93,10 +93,8 @@ struct proc {
    struct inode *cwd;           
    char name[16];               
    
-   // Nouveaux champs pour les statistiques
-   uint64 creation_time;        // Temps de création du processus
-   uint64 cpu_usage;           // Temps CPU utilisé
-   uint64 total_runtime;       // Temps total depuis la création
+   uint start_time;    // Temps de démarrage en ticks
+   uint cpu_ticks;     // Temps CPU utilisé
 };
 
 // Déclarations des fonctions pour ps

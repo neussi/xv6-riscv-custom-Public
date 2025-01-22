@@ -146,6 +146,9 @@ UPROGS=\
 	$U/_sort\
 	$U/_tail\
 	$U/_head\
+	$U/_touch\
+	$U/_chmod\
+	$U/_menu\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

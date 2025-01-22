@@ -540,3 +540,38 @@ uint64 sys_lseek(void) {
 
     return f->off;
 }
+
+
+uint64
+sys_chmod(void) {
+  char path[MAXPATH];
+  int mode;
+  struct inode *ip;
+  
+  // Récupère le chemin du fichier
+  if(argstr(0, path, MAXPATH) == 0) {
+    return -1;
+  }
+  
+  // Récupère le mode
+  argint(1, &mode);
+  
+  begin_op();
+  
+  // Obtient l'inode
+  if((ip = namei(path)) == 0) {
+    end_op();
+    return -1;
+  }
+  
+  ilock(ip);
+  
+  // Modifie uniquement les bits de permission (derniers 9 bits)
+  ip->type = (ip->type & ~0777) | (mode & 0777);
+  
+  iupdate(ip);
+  iunlock(ip);
+  
+  end_op();
+  return 0;
+}

@@ -1,40 +1,40 @@
+// Dans user/ps.c
 #include "kernel/types.h"
 #include "kernel/stat.h"
-#include "user.h"
-#include "kernel/proc.h"
+#include "kernel/procstat.h"
+#include "user/user.h"
+#include "kernel/param.h"
 
-int
-main(int argc, char *argv[])
-{
-  struct proc_stat stats[64];
-  int count = getprocs(stats, 64);
-  
-  if (count < 0) {
-    fprintf(2, "ps: failed to retrieve process information\n");
-    exit(1);
-  }
+int main(void) {
+    struct proc_stat stats[NPROC];
+    int count;
 
-  printf("PID\tSTATE\tCPU\tRUNTIME\tMEM\tNAME\n");
-  
-  for(int i = 0; i < count; i++) {
-    char *state;
-    switch(stats[i].state) {
-      case UNUSED:   state = "unused  "; break;
-      case USED:     state = "used    "; break;
-      case SLEEPING: state = "sleep   "; break;
-      case RUNNABLE: state = "runnable"; break;
-      case RUNNING:  state = "running "; break;
-      case ZOMBIE:   state = "zombie  "; break;
-      default:       state = "???     "; break;
+    count = getprocs(stats, NPROC);
+    if(count < 0){
+        fprintf(2, "ps: impossible de récupérer les infos des processus\n");
+        exit(1);
     }
+
+    // En-tête avec un format fixe
+    printf("PID\tSTATE\t\tMEM\tNAME\n");
     
-    printf("%d\t%s\t%lu\t%lu\t%lu\t%s\n",  // Utilisez %lu pour uint64
-           stats[i].pid,
-           state,
-           stats[i].cpu_usage,
-           stats[i].runtime,
-           stats[i].memory,
-           stats[i].name);
-  }
-  exit(0);
+    for(int i = 0; i < count; i++) {
+        char *state;
+        switch(stats[i].state) {
+            case 0: state = "UNUSED  "; break;
+            case 1: state = "SLEEPING"; break;
+            case 2: state = "RUNNABLE"; break;
+            case 3: state = "RUNNING "; break;
+            case 4: state = "ZOMBIE  "; break;
+            default: state = "UNKNOWN "; break;
+        }
+
+        // Affichage simple et robuste
+        printf("%d\t%s\t%dK\t%s\n", 
+               stats[i].pid,
+               state,
+               stats[i].memory / 1024,
+               stats[i].name);
+    }
+    exit(0);
 }

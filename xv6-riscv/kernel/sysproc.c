@@ -110,12 +110,26 @@ sys_exit_qemu(void)
 uint64
 sys_getprocs(void)
 {
-  uint64 stats_addr;
-  int max;
-  
-  argaddr(0, &stats_addr);
-  argint(1, &max);
-  
-  struct proc_stat *stats = (struct proc_stat*)stats_addr;
-  return getprocs(stats, max);
+    uint64 addr;
+    int max;
+    struct proc_stat *ps;
+
+    // On ne peut pas vérifier le retour de ces fonctions car elles sont void
+    argaddr(0, &addr);
+    argint(1, &max);
+    
+    // Vérifications de base
+    if(max <= 0 || max > NPROC)
+        return -1;
+
+    // Convertir l'adresse utilisateur en pointeur noyau
+    ps = (struct proc_stat*)addr;
+    
+    // Vérifier que l'adresse est valide en essayant de copier une petite quantité de données
+    char test;
+    if(copyout(myproc()->pagetable, addr, &test, 1) < 0)
+        return -1;
+
+    // Appeler getprocs avec l'adresse validée
+    return getprocs(ps, max);
 }

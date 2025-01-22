@@ -1,18 +1,13 @@
-// procstat.h
-#ifndef PROCSTAT_H
-#define PROCSTAT_H
-#include "spinlock.h"  // Pour struct spinlock
-#include "types.h"     // Pour pagetable_t
-#include "param.h"  
-
+// Dans kernel/procstat.h
+#ifndef _PROCSTAT_H_
+#define _PROCSTAT_H_
 
 struct proc_stat {
-    int pid;                  // ID du processus
-    int state;               // État du processus (utilisons int au lieu de enum pour l'espace utilisateur)
-    char name[16];           // Nom du processus
-    uint64 cpu_usage;        // Utilisation CPU
-    uint64 runtime;          // Temps d'exécution total
-    uint64 memory;           // Utilisation mémoire
+    int pid;           // Process ID
+    int state;         // Process state
+    uint ticks;        // Temps total d'exécution
+    uint memory;       // Mémoire utilisée
+    char name[16];     // Nom du processus
 };
 
-#endif
+#endif // _PROCSTAT_H_

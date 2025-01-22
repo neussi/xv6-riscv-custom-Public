@@ -20,11 +20,12 @@ fmtname(char *path)
     return p;
   memmove(buf, p, strlen(p));
   memset(buf+strlen(p), ' ', DIRSIZ-strlen(p));
+  buf[DIRSIZ] = 0;
   return buf;
 }
 
 void
-ls(char *path)
+ls(char *path, int long_listing)
 {
   char buf[512], *p;
   int fd;
@@ -43,9 +44,11 @@ ls(char *path)
   }
 
   switch(st.type){
-  case T_DEVICE:
   case T_FILE:
-    printf("%s %d %d %d\n", fmtname(path), st.type, st.ino, (int) st.size);
+    if(long_listing)
+      printf("%s %d %d %ld\n", fmtname(path), st.type, st.ino, st.size);
+    else
+      printf("%s\n", fmtname(path));
     break;
 
   case T_DIR:
@@ -65,7 +68,10 @@ ls(char *path)
         printf("ls: cannot stat %s\n", buf);
         continue;
       }
-      printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, (int) st.size);
+      if(long_listing)
+        printf("%s %d %d %ld\n", fmtname(buf), st.type, st.ino, st.size);
+      else
+        printf("%s\n", fmtname(buf));
     }
     break;
   }
@@ -76,12 +82,19 @@ int
 main(int argc, char *argv[])
 {
   int i;
+  int long_listing = 0;
+
+  if(argc > 1 && strcmp(argv[1], "-l") == 0){
+    long_listing = 1;
+    argc--;
+    argv++;
+  }
 
   if(argc < 2){
-    ls(".");
+    ls(".", long_listing);
     exit(0);
   }
   for(i=1; i<argc; i++)
-    ls(argv[i]);
+    ls(argv[i], long_listing);
   exit(0);
 }

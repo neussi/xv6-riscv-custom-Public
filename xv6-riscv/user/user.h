@@ -58,5 +58,6 @@ int getprocs(struct proc_stat*, int);
 // Dans user/user.h
 int exit_qemu(void);
 
+int chmod(const char*, int);
 
 #endif // USER_H

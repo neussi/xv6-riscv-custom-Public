@@ -23,3 +23,4 @@
 #define SYS_lseek  22 
 #define SYS_getprocs 23
 #define SYS_exit_qemu 24
+#define SYS_chmod 25

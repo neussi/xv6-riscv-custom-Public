@@ -12,7 +12,7 @@ struct sleeplock;
 struct stat;
 struct superblock;
 
-
+uint64 argraw(int);
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);
@@ -189,8 +189,8 @@ void            virtio_disk_init(void);
 void            virtio_disk_rw(struct buf *, int);
 void            virtio_disk_intr(void);
 
+// Ajoutez après les includes existants:
+struct procstat;  // Forward declaration
 int             getprocs(struct proc_stat*, int);
-
-
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

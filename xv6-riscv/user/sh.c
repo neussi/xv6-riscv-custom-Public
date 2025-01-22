@@ -1,5 +1,3 @@
-// Shell.
-
 #include "kernel/types.h"
 #include "user/user.h"
 #include "kernel/fcntl.h"
@@ -10,8 +8,10 @@
 #define PIPE  3
 #define LIST  4
 #define BACK  5
+#define SCRIPT 6
 
 #define MAXARGS 10
+#define MAXSCRIPT 1024
 
 struct cmd {
   int type;
@@ -49,12 +49,52 @@ struct backcmd {
   struct cmd *cmd;
 };
 
-int fork1(void);  // Fork but panics on failure.
+struct scriptcmd {
+  int type;
+  char *filename;
+};
+
+int fork1(void);
 void panic(char*);
 struct cmd *parsecmd(char*);
 void runcmd(struct cmd*) __attribute__((noreturn));
+void execscript(char*);
 
-// Execute cmd.  Never returns.
+// Fonction pour exécuter un script
+void execscript(char *filename) {
+  char buf[MAXSCRIPT];
+  int fd;
+  int n;
+  char *p;
+  
+  fd = open(filename, O_RDONLY);
+  if(fd < 0) {
+    fprintf(2, "cannot open script %s\n", filename);
+    exit(1);
+  }
+  
+  p = buf;
+  while((n = read(fd, p, 1)) > 0) {
+    if(*p == '\n') {
+      *p = 0;
+      if(strlen(buf) > 0) {
+        if(fork1() == 0) {
+          runcmd(parsecmd(buf));
+        }
+        wait(0);
+      }
+      p = buf;
+    } else {
+      p++;
+      if(p >= &buf[MAXSCRIPT-1]) {
+        fprintf(2, "script too long\n");
+        exit(1);
+      }
+    }
+  }
+  close(fd);
+}
+
 void
 runcmd(struct cmd *cmd)
 {
@@ -64,6 +104,7 @@ runcmd(struct cmd *cmd)
   struct listcmd *lcmd;
   struct pipecmd *pcmd;
   struct redircmd *rcmd;
+  struct scriptcmd *scmd;
 
   if(cmd == 0)
     exit(1);
@@ -127,6 +168,11 @@ runcmd(struct cmd *cmd)
     if(fork1() == 0)
       runcmd(bcmd->cmd);
     break;
+
+  case SCRIPT:
+    scmd = (struct scriptcmd*)cmd;
+    execscript(scmd->filename);
+    break;
   }
   exit(0);
 }
@@ -159,10 +205,18 @@ main(void)
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
-      // Chdir must be called by the parent, not the child.
-      buf[strlen(buf)-1] = 0;  // chop \n
+      buf[strlen(buf)-1] = 0;
       if(chdir(buf+3) < 0)
         fprintf(2, "cannot cd %s\n", buf+3);
+      continue;
+    }
+    if(buf[0] == '.' && buf[1] == '/') {
+      buf[strlen(buf)-1] = 0;
+      if(fork1() == 0) {
+        execscript(buf + 2);
+        exit(1);
+      }
+      wait(0);
       continue;
     }
     if(fork1() == 0)
@@ -189,9 +243,6 @@ fork1(void)
     panic("fork");
   return pid;
 }
-
-//PAGEBREAK!
-// Constructors
 
 struct cmd*
 execcmd(void)
@@ -257,8 +308,18 @@ backcmd(struct cmd *subcmd)
   cmd->cmd = subcmd;
   return (struct cmd*)cmd;
 }
-//PAGEBREAK!
-// Parsing
+
+struct cmd*
+scriptcmd(char *filename)
+{
+  struct scriptcmd *cmd;
+
+  cmd = malloc(sizeof(*cmd));
+  memset(cmd, 0, sizeof(*cmd));
+  cmd->type = SCRIPT;
+  cmd->filename = filename;
+  return (struct cmd*)cmd;
+}
 
 char whitespace[] = " \t\r\n\v";
 char symbols[] = "<|>&;()";
@@ -446,7 +507,6 @@ parseexec(char **ps, char *es)
   return ret;
 }
 
-// NUL-terminate all the counted strings.
 struct cmd*
 nulterminate(struct cmd *cmd)
 {
@@ -488,6 +548,9 @@ nulterminate(struct cmd *cmd)
   case BACK:
     bcmd = (struct backcmd*)cmd;
     nulterminate(bcmd->cmd);
+    break;
+
+  case SCRIPT:
     break;
   }
   return cmd;

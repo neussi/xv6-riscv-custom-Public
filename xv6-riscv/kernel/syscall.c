@@ -33,7 +33,8 @@ fetchstr(uint64 addr, char *buf, int max)
   return strlen(buf);
 }
 
-static uint64
+// kernel/syscall.c
+uint64
 argraw(int n)
 {
   struct proc *p = myproc();
@@ -111,7 +112,7 @@ extern uint64 sys_getprocs(void);
 
 extern uint64 sys_exit_qemu(void);
 
-
+extern uint64 sys_chmod(void);
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
 static uint64 (*syscalls[])(void) = {
@@ -139,6 +140,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_lseek]   sys_lseek,
 [SYS_exit_qemu] sys_exit_qemu,
 [SYS_getprocs]   sys_getprocs,
+[SYS_chmod]   sys_chmod,
 
 
 };

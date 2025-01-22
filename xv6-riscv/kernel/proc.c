@@ -155,9 +155,6 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
-  p->creation_time = ticks;
-  p->cpu_usage = 0;
-  p->total_runtime = 0;
 
   return p;
 }
@@ -479,9 +476,7 @@ scheduler(void)
         p->state = RUNNING;
         
         // Mise à jour des statistiques avant l'exécution
-        p->cpu_usage++;  // Incrémente le temps CPU
-        p->total_runtime = ticks - p->creation_time;  // Met à jour le temps total
-        
+   
         c->proc = p;
         swtch(&c->context, &p->context);
 
@@ -490,13 +485,7 @@ scheduler(void)
         c->proc = 0;
         found = 1;
       }
-      else {
-        // Même si le processus n'est pas en cours d'exécution, 
-        // on met à jour son temps total
-        if(p->state != UNUSED) {
-          p->total_runtime = ticks - p->creation_time;
-        }
-      }
+
       release(&p->lock);
     }
     if(found == 0) {
@@ -724,43 +713,34 @@ procdump(void)
 
 
 
-void
-initprocstat(struct proc *p)
-{
-  p->creation_time = ticks;
-  p->cpu_usage = 0;
-  p->total_runtime = 0;
-}
 
-// Met à jour les statistiques du processus
-void
-updateprocstat(struct proc *p)
+int getprocs(struct proc_stat *ps, int max)
 {
-  if(p->state == RUNNING) {
-    p->cpu_usage++;
-  }
-  p->total_runtime = ticks - p->creation_time;
-}
+    struct proc *p;
+    int n;
+    struct proc_stat local_stats[NPROC];
 
-// Fonction pour obtenir les statistiques des processus
-int
-getprocs(struct proc_stat *stats, int max)
-{
-  struct proc *p;
-  int count = 0;
-  
-  for(p = proc; p < &proc[NPROC] && count < max; p++) {
-    acquire(&p->lock);
-    if(p->state != UNUSED) {
-      stats[count].pid = p->pid;
-      stats[count].state = p->state;
-      safestrcpy(stats[count].name, p->name, sizeof(stats[count].name));
-      stats[count].cpu_usage = p->cpu_usage;
-      stats[count].runtime = p->total_runtime;
-      stats[count].memory = p->sz;
-      count++;
+    if(max <= 0 || max > NPROC)
+        return -1;
+
+    n = 0;
+    for(p = proc; p < &proc[NPROC] && n < max; p++) {
+        acquire(&p->lock);
+        if(p->state != UNUSED) {
+            local_stats[n].pid = p->pid;
+            local_stats[n].state = p->state;
+            local_stats[n].ticks = ticks;
+            local_stats[n].memory = p->sz;
+            safestrcpy(local_stats[n].name, p->name, sizeof(local_stats[n].name));
+            n++;
+        }
+        release(&p->lock);
     }
-    release(&p->lock);
-  }
-  return count;
+
+    if(copyout(myproc()->pagetable, (uint64)ps, (char*)local_stats, 
+               n * sizeof(struct proc_stat)) < 0) {
+        return -1;
+    }
+
+    return n;
 }

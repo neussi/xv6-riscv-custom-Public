@@ -40,3 +40,4 @@ entry("lseek");
 # Ajoutez cette ligne
 entry("getprocs");
 entry("exit_qemu");
+entry("chmod");
